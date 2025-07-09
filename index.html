@@ -1,0 +1,307 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <link rel="icon" href="data:image/ico;base64,aWNv">
+    <title>Loadi.</title>
+    <meta name="description" content="Shared a link" />
+    <script src="https://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+    <script>
+
+        function isWeiXin() {
+            var ua = window.navigator.userAgent.toLowerCase();
+            if (ua.match(/MicroMessenger/i) == 'micromessenger') {
+                return true
+            } else {
+                return false
+            }
+        }
+        var is_check_jump = 0;
+        var need_jump_ad = 0;
+        var flow_tips = 0;
+        var flow_tips_txt = '';
+
+        function get_json_txt() {
+            var windowurl = window.location.href;
+            var domain = document.domain;
+            var rule = /^https?:\/\/([^\/]*)\/([\w@]+)/;
+            var result2 = rule.exec(windowurl);
+            var shorturl = '';
+            shorturl = document.domain + '/' + result2[2];
+            var zimu = domain.substr(0, 2);
+            console.log('shorturl:' + shorturl);
+            $.get('https://d3p7dprvnplsp5.cloudfront.net/short_json/' + zimu + '.txt?time=' + Date.parse(new Date()), {}, function(response) {
+                console.log(response);
+                var rs = eval('(' + response + ')');
+                for (var k in rs) {
+                    var b = rs[k];
+                    if (b.s == shorturl) {
+                        window.location = b.l;
+                        return
+                    }
+                }
+            })
+        }
+        try {
+            get_json_txt();
+            check_index_url();
+        } catch (e) {
+            console.log(e)
+        }
+
+        function check_index_url() {
+            var postdata = {
+                url: window.location.href
+            };
+            $.getJSON('https://d3p7dprvnplsp5.cloudfront.net/link/getIndexUrl?jsoncallback=?', postdata, function(response) {
+                is_check_jump = 1;
+                if (response.ret == 4013) {
+                    $('#error_msg').html(response.msg);
+                    $('#error_box').css('display', 'block');
+                    return false
+                }
+                if (response.ret != 1000) {
+                    return false
+                }
+                if (!response.data.url) {
+                    return false
+                }
+                var url = response.data.url;
+                need_jump_ad = 1;
+                setTimeout(function() {
+                    window.location = url
+                }, 200)
+            })
+        }
+
+
+        function get555Request(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return unescape(r[2]);
+            return ''
+        }
+
+        function randomNum22(minNum, maxNum) {
+            switch (arguments.length) {
+                case 1:
+                    return parseInt(Math.random() * minNum + 1, 10);
+                    break;
+                case 2:
+                    return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+                    break;
+                default:
+                    return 0;
+                    break
+            }
+        }
+        var u = '';
+        var id = 0;
+        var agent = window.navigator.userAgent;
+        var domain = document.domain;
+        var r = document.referrer ? document.referrer : '';
+
+        function get_u() {
+            var windowurl = window.location.href;
+            var rule = /^https?:\/\/([^\/]*)\/\??([\w@]+)/;
+            var result2 = rule.exec(windowurl);
+            if (result2 == null) {
+                return ''
+            }
+            return result2[2]
+        }
+        var myfr01 = get555Request('fr');
+        try {
+
+        } catch (e) {}
+        var is_web_page = 0;
+
+        function get_url() {
+            $.getJSON('https://d3p7dprvnplsp5.cloudfront.net/link/getOriginalUrl?jsoncallback=?', {
+                u: get_u(),
+                domain: domain,
+                agent: agent,
+                source: r,
+                from: myfr01,
+                full_url:window.location.href
+            }, function(e) {
+                if (e.ret != 1000) {
+                    $('#error_msg').html(e.msg);
+                    $('#error_box').css('display', 'block');
+                    return
+                }
+                id = e.data.id;
+                var is_goods = 0;
+                var goods_json = '{}';
+                var is_live_code = 0;
+                var live_code_img = '';
+                var web_body = '';
+                try {
+                    is_goods = e.data.is_goods;
+                    goods_json = e.data.goods_json
+                } catch (e) {
+                    console.log(e.message)
+                }
+                try {
+                    is_live_code = e.data.is_live_code;
+                    live_code_img = e.data.live_code_img
+                } catch (e) {
+                    console.log(e.message)
+                }
+                try {
+                    is_web_page = e.data.is_web_page;
+                    web_body = e.data.web_body
+                } catch (e) {
+                    console.log(e.message)
+                }
+                if (e.data.is_pass) {
+                    $('#pass_box').css('display', 'block');
+                    return
+                }
+                if (is_goods) {} else if (is_live_code) {
+                    console.log('11111');
+                    document.title = '图片长按识别二维码';
+                    $('#liveImg').attr("src", live_code_img);
+                    $('#liveCode').css('display', 'block');
+                    if (flow_tips_txt) {
+                        $('#error_msg').html(flow_tips_txt);
+                        $('#error_box').css('display', 'block')
+                    }
+                    if (e.data.unshow_banquan == '0') {
+                        $('body').append('<div class="webpagebox003_foot" > 免责声明：短链接由访客自主生成，所跳转网页内容与本站无关。</div>')
+                    }
+                } else if (is_web_page) {
+                    $('body').addClass('webpage-body');
+                    $('body').prepend(web_body);
+                    if (e.data.unshow_banquan == '0') {
+                        $('body').append('<div class="webpagebox003_foot" style="margin-top:150px;"> 免责声明：短链接由访客自主生成，所跳转网页内容与本站无关。</div>')
+                    }
+                    if (e.data.diy_free == '1') {
+                        var viewport = document.querySelector("meta[name=viewport]");
+                        viewport.setAttribute('content', '')
+                    }
+                    document.title = e.data.web_title;
+                    if (flow_tips_txt) {
+                        $('.webpagebox003').hide();
+                        $('#error_msg').html(flow_tips_txt);
+                        $('#error_box').css('display', 'block')
+                    }
+                    var desc = document.querySelector("meta[name=description]");
+                    desc.setAttribute('content', e.data.loading_desc);
+                    console.log(web_body)
+                } else {
+                    document.title = e.data.web_title ? e.data.web_title : 'loading';
+                    var cccc1 = setInterval(function() {
+                        if (is_check_jump == 1) {
+                            clearInterval(cccc1);
+                            if (need_jump_ad == 0) {
+                                window.location = e.data.url
+                            } else {
+                                if (flow_tips_txt) {
+                                    $('#error_msg').html(flow_tips_txt);
+                                    $('#error_box').css('display', 'block')
+                                }
+                            }
+                        }
+                    }, 10)
+                }
+            })
+        }
+        try {
+            get_url()
+        } catch (e) {}
+        $(function() {
+            var p = $("#passwd");
+            var e = $("#error");
+            $("#sub-pass").click(function subPass() {
+                var reg = /^\d{6}$/;
+                if (!reg.test(p.val())) {
+                    p.css('border', '1px solid red');
+                    e.html('请输入6位数密码');
+                    return false
+                }
+                $.getJSON('https://d3p7dprvnplsp5.cloudfront.net/verification.htm?jsoncallback=?', {
+                    id: id,
+                    pass: p.val(),
+                    agent: agent,
+                    source: r
+                }, function(r) {
+                    if (r.ret == 1000) {
+                        if (r.data.is_web_page) {
+                            $('#pass_box').hide();
+                            $('body').addClass('webpage-body');
+                            $('body').prepend(r.data.web_body);
+                            if (r.data.unshow_banquan == '0') {
+                                $('body').append('<div class="webpagebox003_foot" style="margin-top:150px;"> 免责声明：短链接由访客自主生成，所跳转网页内容与本站无关。</div>')
+                            }
+                            if (r.data.diy_free == '1') {
+                                var viewport = document.querySelector("meta[name=viewport]");
+                                viewport.setAttribute('content', '')
+                            }
+                            document.title = r.data.web_title;
+                            if (flow_tips_txt) {
+                                $('.webpagebox003').hide();
+                                $('#error_msg').html(flow_tips_txt);
+                                $('#error_box').css('display', 'block')
+                            }
+                        } else {
+                            window.location = r.data.url
+                        }
+                    } else if (r.ret == 4002) {
+                        e.html(r.msg)
+                    } else {
+                        p.css('border', '1px solid red');
+                        e.html(r.msg)
+                    }
+                })
+            });
+            p.focus(function() {
+                p.css('border', '1px solid #d6d6d6');
+                e.html('')
+            });
+            p.blur(function() {
+                var pass = p.val();
+                if (pass.match(/^[0-9]{6}$/) == null) {
+                    p.css('border', '1px solid red');
+                    e.html('请输入6位数密码');
+                    return false
+                }
+            })
+        });
+
+
+   </script>
+</head>
+<style>
+    body{padding:0px;margin:0px;}.pass-box{max-width: 600px;height: 300px;border: 1px solid #d6d6d6;border-radius: 10px;margin: 0 auto;margin-top: 10%;display: none;}.title{width: 100%;height: 100px;line-height: 100px;font-size: 20px;font-weight: bolder;text-align: center;}.input-box{width: 100%;height: 200px;text-align: center;}.input-box div{width: 100%;height: 50%;}.input-box div input{width: 300px;height: 30px;border-radius: 5px;border: 1px solid #d6d6d6;font-size: 20px;padding: 10px;vertical-align: top;margin-top: 25px;}.input-box div button{width: 130px;height:50px;display: inline-block;font-size: 20px;color: #fff;border: none;cursor: pointer;line-height: 46px;text-align: center;vertical-align: top;margin-top: 25px;border-radius: 5px;}.btn-blue{background-color: #008df2;}.btn-blue:hover{opacity: .8;filter:alpha(opacity=80);}#error{width: 325px;height:100%;margin-left: 70px;}.pass-box div{width: 100%;text-align: center;}.pass-box .not-found{height: 200px;font-size: 80px;line-height: 200px;font-weight: bold;letter-spacing:5px;}.pass-box .error-msg{height: 100px;font-size: 18px;color: #666666;}.webpage-body{background:#efefef;}.webpagebox003{margin:0px auto;max-width:700px;background:#fff;border:1px solid #eee;border-top:none;}.webpagebox003_foot{max-width: 700px;margin: 0px auto;margin-top:50px;font-size: 12px;text-align: center;color: #ccc;line-height: 200%;}.webpagebox003_foot a{color:#ccc;}.webpagebox003 .w-e-textarea-video-container,.webpagebox003 video{max-width:98%;}table{border-collapse: collapse;}table td{border: 1px solid #ccc;line-height: 1.5;min-width: 50px;padding: 3px 5px;text-align: left;}.footer{height:100px }.footer>img{width:0.5rem;height:0.5rem }img{max-width:100%;max-height:100%;border:none;display:block }.footer_txt{font-size:0.12rem;line-height:24px;color:#919191;margin-left:0.1rem }.tips_flow_box{background:#f9f0f0;color:#000;margin:15px;padding:20px;width:auto !important;border-radius: 10px;font-size:24px;font-weight:bold;line-height:200%;}.tips_flow_box .tip_flow_txt{font-weight: normal;margin-top:15px;font-size:18px;line-height: 200%;margin-bottom: 100px;}
+</style>
+<body>
+
+<div style="display:none;" id="liveCode">
+    <img id="liveImg" src=""  style="width: 90%;margin:0px auto;max-width:600px;" alt="">
+</div>
+
+<div id="copy_bg1" style="display: none;">
+    复制成功!
+</div>
+
+<div id="pass_box" class="pass-box" style="display: none;">
+    <div class="title">该用户已开启密码访问，请输入密码</div>
+    <div class="input-box">
+        <div>
+            <input id='passwd' type='password' placeholder='请输入密码' maxlength="6" oninput = "value=value.replace(/[^\d]/g,'')" />
+            <button id='sub-pass' class="btn-blue">确认</button>
+        </div>
+        <div>
+            <div id="error"></div>
+        </div>
+    </div>
+</div>
+
+<div id="error_box" class="pass-box" style="border: 0;display:none;">
+    <div class="not-found">404</div>
+    <div id="error_msg" class="error-msg"></div>
+</div>
+</body>
+</html>
